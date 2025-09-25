@@ -1,4 +1,4 @@
-import {test} from '@playwright/test';
+import {expect, test} from '@playwright/test';
 
 // test.describe('test suite 1', () => {
 //     test('the first test', () => {
@@ -73,7 +73,55 @@ test('locating parent elements', async ({page}) => {
 }) 
 
 test('Reusing locators', async ({page}) => {
-    await page.locator('nb-card').filter({hasText: 'Basic form'}).getByRole('textbox', {name: 'Email'}).fill('test@test.com')
-    await page.locator('nb-card').filter({hasText: 'Basic form'}).getByRole('textbox', {name: 'Password'}).fill('Welcome123')
-    await page.locator('nb-card').filter({hasText: 'Basic form'}).getByRole('button').click()
+    const basicForm = page.locator('nb-card').filter({hasText: 'Basic form'})
+    const emailFieldBasicForm = basicForm.getByRole('textbox', {name: 'Email'})
+    await emailFieldBasicForm.fill('test@test.com')
+    await basicForm.getByRole('textbox', {name: 'Password'}).fill('Welcome123')
+    await basicForm.locator('nb-checkbox').click()
+    await basicForm.getByRole('button').click()
+
+    await expect(emailFieldBasicForm).toHaveValue('test@test.com')
+})
+
+test('extracting values', async ({page}) => {
+    // validate that the button text on the Basic form is Submit
+    const basicForm = page.locator('nb-card').filter({hasText: 'Basic form'})
+    const buttonText = await basicForm.locator('button').textContent()
+    console.log(`button text is: ${buttonText}`)
+    expect(buttonText).toEqual('Submit')
+    // await expect(basicForm.getByRole('button')).toHaveText('Submit')
+
+    // get all radio buttons and validate that at least one of them has the text Option 1
+    const radioButtons = await page.locator('nb-radio').allTextContents()
+    console.log(radioButtons)
+    expect(radioButtons).toContain('Option 1')
+
+    // input value
+    const emailField = basicForm.getByRole('textbox', {name: 'Email'})
+    await emailField.fill('test@test.com')
+    const emailValue = await emailField.inputValue()
+    expect(emailValue).toEqual('test@test.com')
+
+    // validate the value of the html attribute
+    const placeholderValue = await emailField.getAttribute('placeholder')
+    expect(placeholderValue).toEqual('Email')
+})
+
+test('assertions', async ({page}) => {
+    const basicFormButton = page.locator('nb-card').filter({hasText: 'Basic form'}).locator('button')
+
+    // general assertions
+    const value = 5
+    expect(value).toEqual(5)
+
+    const text = await basicFormButton.textContent()
+    expect(text).toEqual('Submit')
+
+    // locator assertion
+    await expect(basicFormButton).toHaveText('Submit')
+
+    // soft assertion - test will continue even if this fails. Not the best practice
+    await expect.soft(basicFormButton).toHaveText('Submit123')
+    await basicFormButton.click()
+    
 })
