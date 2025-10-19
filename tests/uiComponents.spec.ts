@@ -159,3 +159,12 @@ test('web tables', async({page}) => {
     }
 
 }) 
+
+test('datepicker', async ({page}) =>{
+    await page.getByTitle('Forms').click()
+    await page.getByTitle('Datepicker').click()
+    const calendarInputField = page.getByPlaceholder('Form Picker')
+    await calendarInputField.click()
+    await page.locator('[class="day-cell ng-star-inserted"]').getByText('1', {exact: true}).click()
+    await expect(calendarInputField). toHaveValue('Oct 1, 2025')
+})
